@@ -1045,6 +1045,41 @@ public class CheckpointCoordinator {
 			Map<JobVertexID, ExecutionJobVertex> tasks,
 			boolean errorIfNoCheckpoint,
 			boolean allowNonRestoredState) throws Exception {
+		return restoreCheckpointedState(
+			tasks,
+			errorIfNoCheckpoint,
+			allowNonRestoredState,
+			new RestoreFromLatest());
+	}
+
+	/**
+	 * Restores the checkpointed state according to restore type.
+	 *
+	 * @param tasks Map of job vertices to restore. State for these vertices is
+	 * restored via {@link Execution#setInitialState(TaskStateSnapshot)}.
+	 * @param errorIfNoCheckpoint Fail if no completed checkpoint is available to
+	 * restore from.
+	 * @param allowNonRestoredState Allow checkpoint state that cannot be mapped
+	 * to any job vertex in tasks.
+	 * @param restoreType decides which checkpointed state will be restored.
+	 * @return <code>true</code> if state was restored, <code>false</code> otherwise.
+	 * @throws IllegalStateException If the CheckpointCoordinator is shut down.
+	 * @throws IllegalStateException If no completed checkpoint is available and
+	 *                               the <code>failIfNoCheckpoint</code> flag has been set.
+	 * @throws IllegalStateException If the checkpoint contains state that cannot be
+	 *                               mapped to any job vertex in <code>tasks</code> and the
+	 *                               <code>allowNonRestoredState</code> flag has not been set.
+	 * @throws IllegalStateException If the max parallelism changed for an operator
+	 *                               that restores state from this checkpoint.
+	 * @throws IllegalStateException If the parallelism changed for an operator
+	 *                               that restores <i>non-partitioned</i> state from this
+	 *                               checkpoint.
+	 */
+	public boolean restoreCheckpointedState(
+			Map<JobVertexID, ExecutionJobVertex> tasks,
+			boolean errorIfNoCheckpoint,
+			boolean allowNonRestoredState,
+			RestoreType restoreType) throws Exception {
 
 		synchronized (lock) {
 			if (shutdown) {
@@ -1067,8 +1102,11 @@ public class CheckpointCoordinator {
 
 			LOG.debug("Status of the shared state registry after restore: {}.", sharedStateRegistry);
 
-			// Restore from the latest checkpoint
-			CompletedCheckpoint latest = completedCheckpointStore.getLatestCheckpoint();
+			// Restore from the latest checkpoint or from the specified checkpointID
+			// TODO this could only use checkpointID after we move recover() out and ensure it will be called before this function
+			CompletedCheckpoint latest = restoreType.fromLatest()
+				? completedCheckpointStore.getLatestCheckpoint()
+				: completedCheckpointStore.getCheckpoint(restoreType.getCheckpointID());
 
 			if (latest == null) {
 				if (errorIfNoCheckpoint) {
@@ -1335,6 +1373,42 @@ public class CheckpointCoordinator {
 					}
 				}
 			});
+		}
+	}
+
+	public interface RestoreType {
+		boolean fromLatest();
+		long getCheckpointID();
+	}
+
+	public class RestoreFromLatest implements RestoreType {
+
+		@Override
+		public boolean fromLatest() {
+			return true;
+		}
+
+		@Override
+		public long getCheckpointID() {
+			return -1L;
+		}
+	}
+
+	public class RestoreFromSpecifiedCheckpointID implements RestoreType {
+		private final long checkpointID;
+
+		public RestoreFromSpecifiedCheckpointID(long checkpointID) {
+			this.checkpointID = checkpointID;
+		}
+
+		@Override
+		public boolean fromLatest() {
+			return false;
+		}
+
+		@Override
+		public long getCheckpointID() {
+			return checkpointID;
 		}
 	}
 }
