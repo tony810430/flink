@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.apache.flink.util.Preconditions.checkArgument;
@@ -42,6 +43,9 @@ public class StandaloneCompletedCheckpointStore implements CompletedCheckpointSt
 
 	/** The completed checkpoints. */
 	private final ArrayDeque<CompletedCheckpoint> checkpoints;
+
+	/** The completed checkpoints indexed by checkpointID. */
+	private final HashMap<Long, CompletedCheckpoint> indexedCheckpoints = new HashMap<>();
 
 	/**
 	 * Creates {@link StandaloneCompletedCheckpointStore}.
@@ -65,10 +69,12 @@ public class StandaloneCompletedCheckpointStore implements CompletedCheckpointSt
 	public void addCheckpoint(CompletedCheckpoint checkpoint) throws Exception {
 
 		checkpoints.addLast(checkpoint);
+		indexedCheckpoints.put(checkpoint.getCheckpointID(), checkpoint);
 
 		if (checkpoints.size() > maxNumberOfCheckpointsToRetain) {
 			try {
 				CompletedCheckpoint checkpointToSubsume = checkpoints.removeFirst();
+				indexedCheckpoints.remove(checkpointToSubsume.getCheckpointID(), checkpointToSubsume);
 				checkpointToSubsume.discardOnSubsume();
 			} catch (Exception e) {
 				LOG.warn("Fail to subsume the old checkpoint.", e);
@@ -79,6 +85,11 @@ public class StandaloneCompletedCheckpointStore implements CompletedCheckpointSt
 	@Override
 	public CompletedCheckpoint getLatestCheckpoint() {
 		return checkpoints.isEmpty() ? null : checkpoints.getLast();
+	}
+
+	@Override
+	public CompletedCheckpoint getCheckpoint(long checkpointID) {
+		return indexedCheckpoints.get(checkpointID);
 	}
 
 	@Override
@@ -106,6 +117,7 @@ public class StandaloneCompletedCheckpointStore implements CompletedCheckpointSt
 			}
 		} finally {
 			checkpoints.clear();
+			indexedCheckpoints.clear();
 		}
 	}
 

@@ -50,6 +50,14 @@ public interface CompletedCheckpointStore {
 	CompletedCheckpoint getLatestCheckpoint() throws Exception;
 
 	/**
+	 * Returns the {@link CompletedCheckpoint} instance to which the specified checkpointID is mapped,
+	 * or <code>null</code> if none was added.
+	 *
+	 * @param checkpointID the checkpointID whose associated {@link CompletedCheckpoint} is to be returned
+	 */
+	CompletedCheckpoint getCheckpoint(long checkpointID) throws Exception;
+
+	/**
 	 * Shuts down the store.
 	 *
 	 * <p>The job status is forwarded and used to decide whether state should

@@ -146,6 +146,11 @@ public class CheckpointCoordinatorFailureTest extends TestLogger {
 		}
 
 		@Override
+		public CompletedCheckpoint getCheckpoint(long checkpointID) throws Exception {
+			throw new UnsupportedOperationException("Not implemented.");
+		}
+
+		@Override
 		public void shutdown(JobStatus jobStatus) throws Exception {
 			throw new UnsupportedOperationException("Not implemented.");
 		}

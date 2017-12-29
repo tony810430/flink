@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -39,6 +40,8 @@ public class RecoverableCompletedCheckpointStore implements CompletedCheckpointS
 	private static final Logger LOG = LoggerFactory.getLogger(RecoverableCompletedCheckpointStore.class);
 
 	private final ArrayDeque<CompletedCheckpoint> checkpoints = new ArrayDeque<>(2);
+
+	private final HashMap<Long, CompletedCheckpoint> indexedCheckpoints = new HashMap<>();
 
 	private final ArrayDeque<CompletedCheckpoint> suspended = new ArrayDeque<>(2);
 
@@ -56,6 +59,9 @@ public class RecoverableCompletedCheckpointStore implements CompletedCheckpointS
 	@Override
 	public void recover() throws Exception {
 		checkpoints.addAll(suspended);
+		for (CompletedCheckpoint completedCheckpoint: checkpoints) {
+			indexedCheckpoints.put(completedCheckpoint.getCheckpointID(), completedCheckpoint);
+		}
 		suspended.clear();
 	}
 
@@ -63,6 +69,7 @@ public class RecoverableCompletedCheckpointStore implements CompletedCheckpointS
 	public void addCheckpoint(CompletedCheckpoint checkpoint) throws Exception {
 
 		checkpoints.addLast(checkpoint);
+		indexedCheckpoints.put(checkpoint.getCheckpointID(), checkpoint);
 
 		if (checkpoints.size() > maxRetainedCheckpoints) {
 			removeOldestCheckpoint();
@@ -71,6 +78,7 @@ public class RecoverableCompletedCheckpointStore implements CompletedCheckpointS
 
 	public void removeOldestCheckpoint() throws Exception {
 		CompletedCheckpoint checkpointToSubsume = checkpoints.removeFirst();
+		indexedCheckpoints.remove(checkpointToSubsume.getCheckpointID(), checkpointToSubsume);
 		checkpointToSubsume.discardOnSubsume();
 	}
 
@@ -80,9 +88,15 @@ public class RecoverableCompletedCheckpointStore implements CompletedCheckpointS
 	}
 
 	@Override
+	public CompletedCheckpoint getCheckpoint(long checkpointID) throws Exception {
+		return indexedCheckpoints.get(checkpointID);
+	}
+
+	@Override
 	public void shutdown(JobStatus jobStatus) throws Exception {
 		if (jobStatus.isGloballyTerminalState()) {
 			checkpoints.clear();
+			indexedCheckpoints.clear();
 			suspended.clear();
 		} else {
 			suspended.clear();
@@ -92,6 +106,7 @@ public class RecoverableCompletedCheckpointStore implements CompletedCheckpointS
 			}
 
 			checkpoints.clear();
+			indexedCheckpoints.clear();
 		}
 	}
 

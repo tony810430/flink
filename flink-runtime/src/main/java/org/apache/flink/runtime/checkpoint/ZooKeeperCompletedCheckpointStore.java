@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -85,6 +86,9 @@ public class ZooKeeperCompletedCheckpointStore implements CompletedCheckpointSto
 	 * operations.
 	 */
 	private final ArrayDeque<CompletedCheckpoint> completedCheckpoints;
+
+	/** This is completedCheckpoints indexed by checkpointID */
+	private final HashMap<Long, CompletedCheckpoint> indexedCompletedCheckpoints = new HashMap<>();
 
 	/**
 	 * Creates a {@link ZooKeeperCompletedCheckpointStore} instance.
@@ -206,6 +210,10 @@ public class ZooKeeperCompletedCheckpointStore implements CompletedCheckpointSto
 		// of ZooKeeper.
 		completedCheckpoints.clear();
 		completedCheckpoints.addAll(retrievedCheckpoints);
+		indexedCompletedCheckpoints.clear();
+		for (CompletedCheckpoint completedCheckpoint: completedCheckpoints) {
+			indexedCompletedCheckpoints.put(completedCheckpoint.getCheckpointID(), completedCheckpoint);
+		}
 
 		if (completedCheckpoints.isEmpty() && numberOfInitialCheckpoints > 0) {
 			throw new FlinkException(
@@ -233,11 +241,14 @@ public class ZooKeeperCompletedCheckpointStore implements CompletedCheckpointSto
 		checkpointsInZooKeeper.addAndLock(path, checkpoint);
 
 		completedCheckpoints.addLast(checkpoint);
+		indexedCompletedCheckpoints.put(checkpoint.getCheckpointID(), checkpoint);
 
 		// Everything worked, let's remove a previous checkpoint if necessary.
 		while (completedCheckpoints.size() > maxNumberOfCheckpointsToRetain) {
 			try {
-				removeSubsumed(completedCheckpoints.removeFirst());
+				CompletedCheckpoint checkpointToSubsume = completedCheckpoints.removeFirst();
+				indexedCompletedCheckpoints.remove(checkpointToSubsume.getCheckpointID(), checkpointToSubsume);
+				removeSubsumed(checkpointToSubsume);
 			} catch (Exception e) {
 				LOG.warn("Failed to subsume the old checkpoint", e);
 			}
@@ -254,6 +265,11 @@ public class ZooKeeperCompletedCheckpointStore implements CompletedCheckpointSto
 		else {
 			return completedCheckpoints.peekLast();
 		}
+	}
+
+	@Override
+	public CompletedCheckpoint getCheckpoint(long checkpointID) {
+		return indexedCompletedCheckpoints.get(checkpointID);
 	}
 
 	@Override
@@ -286,6 +302,7 @@ public class ZooKeeperCompletedCheckpointStore implements CompletedCheckpointSto
 			}
 
 			completedCheckpoints.clear();
+			indexedCompletedCheckpoints.clear();
 
 			String path = "/" + client.getNamespace();
 
@@ -296,6 +313,7 @@ public class ZooKeeperCompletedCheckpointStore implements CompletedCheckpointSto
 
 			// Clear the local handles, but don't remove any state
 			completedCheckpoints.clear();
+			indexedCompletedCheckpoints.clear();
 
 			// Release the state handle locks in ZooKeeper such that they can be deleted
 			checkpointsInZooKeeper.releaseAll();
