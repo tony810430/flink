@@ -54,7 +54,13 @@ public class SourceExternalCheckpointTriggerTest {
 	public void testCheckpointsTriggeredBySource() throws Exception {
 		// set up the basic test harness
 		final StreamTaskTestHarness<Long> testHarness = new StreamTaskTestHarness<>(
-				SourceStreamTask::new,
+				env -> {
+					try {
+						return new SourceStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.LONG_TYPE_INFO);
 
 		testHarness.setupOutputForSingletonOperatorChain();

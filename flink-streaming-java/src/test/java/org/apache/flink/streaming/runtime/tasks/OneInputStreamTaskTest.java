@@ -99,7 +99,14 @@ public class OneInputStreamTaskTest extends TestLogger {
 	@Test
 	public void testOpenCloseAndTimestamps() throws Exception {
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new, BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
+				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
 		testHarness.setupOutputForSingletonOperatorChain();
 
@@ -141,7 +148,13 @@ public class OneInputStreamTaskTest extends TestLogger {
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness =
 			new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				2, 2,
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.STRING_TYPE_INFO);
@@ -254,7 +267,13 @@ public class OneInputStreamTaskTest extends TestLogger {
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness =
 			new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				1, 1,
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.STRING_TYPE_INFO);
@@ -353,7 +372,13 @@ public class OneInputStreamTaskTest extends TestLogger {
 	@Test
 	public void testCheckpointBarriers() throws Exception {
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				2, 2,
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
@@ -416,7 +441,13 @@ public class OneInputStreamTaskTest extends TestLogger {
 	@Test
 	public void testOvertakingCheckpointBarriers() throws Exception {
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				2, 2,
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
@@ -491,7 +522,14 @@ public class OneInputStreamTaskTest extends TestLogger {
 		final Deadline deadline = new FiniteDuration(2, TimeUnit.MINUTES).fromNow();
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new, BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
+			env -> {
+				try {
+					return new OneInputStreamTask<>(env);
+				} catch (Exception e) {
+					return null;
+				}
+			},
+			BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
 		testHarness.setupOutputForSingletonOperatorChain();
 
@@ -534,7 +572,14 @@ public class OneInputStreamTaskTest extends TestLogger {
 
 		final OneInputStreamTaskTestHarness<String, String> restoredTaskHarness =
 				new OneInputStreamTaskTestHarness<>(
-						OneInputStreamTask::new, BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
+					env -> {
+						try {
+							return new OneInputStreamTask<>(env);
+						} catch (Exception e) {
+							return null;
+						}
+					},
+					BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
 		restoredTaskHarness.configureForKeyedStream(keySelector, BasicTypeInfo.STRING_TYPE_INFO);
 
@@ -566,7 +611,13 @@ public class OneInputStreamTaskTest extends TestLogger {
 	public void testQuiesceTimerServiceAfterOpClose() throws Exception {
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				2, 2,
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
@@ -613,7 +664,15 @@ public class OneInputStreamTaskTest extends TestLogger {
 
 	@Test
 	public void testWatermarkMetrics() throws Exception {
-		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(OneInputStreamTask::new, BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
+		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
+				env1 -> {
+					try {
+						return new OneInputStreamTask<>(env1);
+					} catch (Exception e) {
+						return null;
+					}
+				},
+				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
 		OneInputStreamOperator<String, String> headOperator = new WatermarkMetricOperator();
 		OperatorID headOperatorId = new OperatorID();

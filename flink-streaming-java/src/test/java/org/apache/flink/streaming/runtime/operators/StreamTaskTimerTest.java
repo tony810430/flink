@@ -46,7 +46,13 @@ public class StreamTaskTimerTest {
 	public void testOpenCloseAndTimestamps() throws Exception {
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.STRING_TYPE_INFO);
 
@@ -88,10 +94,15 @@ public class StreamTaskTimerTest {
 	@Test
 	public void checkScheduledTimestampe() throws Exception {
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.STRING_TYPE_INFO);
-
 		testHarness.setupOutputForSingletonOperatorChain();
 
 		StreamConfig streamConfig = testHarness.getStreamConfig();

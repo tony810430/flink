@@ -51,7 +51,7 @@ public class TwoInputStreamTask<IN1, IN2, OUT> extends StreamTask<OUT, TwoInputS
 	 *
 	 * @param env The task environment for this task.
 	 */
-	public TwoInputStreamTask(Environment env) {
+	public TwoInputStreamTask(Environment env) throws Exception {
 		super(env);
 		input1WatermarkGauge = new WatermarkGauge();
 		input2WatermarkGauge = new WatermarkGauge();

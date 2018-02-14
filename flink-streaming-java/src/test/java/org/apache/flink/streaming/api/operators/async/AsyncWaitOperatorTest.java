@@ -375,7 +375,13 @@ public class AsyncWaitOperatorTest extends TestLogger {
 		JobVertex chainedVertex = createChainedVertex(false);
 
 		final OneInputStreamTaskTestHarness<Integer, Integer> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				1, 1,
 				BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
@@ -487,7 +493,13 @@ public class AsyncWaitOperatorTest extends TestLogger {
 	@Test
 	public void testStateSnapshotAndRestore() throws Exception {
 		final OneInputStreamTaskTestHarness<Integer, Integer> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				1, 1,
 				BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO);
 
@@ -542,7 +554,13 @@ public class AsyncWaitOperatorTest extends TestLogger {
 
 		final OneInputStreamTaskTestHarness<Integer, Integer> restoredTaskHarness =
 				new OneInputStreamTaskTestHarness<>(
-						OneInputStreamTask::new,
+						env -> {
+							try {
+								return new OneInputStreamTask<>(env);
+							} catch (Exception e) {
+								return null;
+							}
+						},
 						BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO);
 
 		restoredTaskHarness.setTaskStateSnapshot(checkpointId, subtaskStates);

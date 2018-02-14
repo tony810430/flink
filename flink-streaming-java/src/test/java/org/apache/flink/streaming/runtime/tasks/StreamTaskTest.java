@@ -823,7 +823,7 @@ public class StreamTaskTest extends TestLogger {
 	 */
 	public static class NoOpStreamTask<T, OP extends StreamOperator<T>> extends StreamTask<T, OP> {
 
-		public NoOpStreamTask(Environment environment) {
+		public NoOpStreamTask(Environment environment) throws Exception {
 			super(environment, null);
 		}
 
@@ -1045,7 +1045,7 @@ public class StreamTaskTest extends TestLogger {
 
 	private static class EmptyStreamTask extends StreamTask<String, AbstractStreamOperator<String>> {
 
-		public EmptyStreamTask(Environment env) {
+		public EmptyStreamTask(Environment env) throws Exception {
 			super(env, null);
 		}
 
@@ -1071,7 +1071,7 @@ public class StreamTaskTest extends TestLogger {
 
 		private static volatile boolean fail;
 
-		public StateBackendTestSource(Environment env) {
+		public StateBackendTestSource(Environment env) throws Exception {
 			super(env);
 		}
 
@@ -1162,7 +1162,7 @@ public class StreamTaskTest extends TestLogger {
 
 		private LockHolder holder;
 
-		public CancelLockingTask(Environment env) {
+		public CancelLockingTask(Environment env) throws Exception {
 			super(env);
 		}
 
@@ -1206,7 +1206,7 @@ public class StreamTaskTest extends TestLogger {
 	 */
 	public static class CancelFailingTask extends StreamTask<String, AbstractStreamOperator<String>> {
 
-		public CancelFailingTask(Environment env) {
+		public CancelFailingTask(Environment env) throws Exception {
 			super(env);
 		}
 

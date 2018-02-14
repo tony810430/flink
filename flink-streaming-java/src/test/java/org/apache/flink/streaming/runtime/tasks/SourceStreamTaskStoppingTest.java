@@ -38,7 +38,7 @@ public class SourceStreamTaskStoppingTest {
 	static boolean stopped = false;
 
 	@Test
-	public void testStop() {
+	public void testStop() throws Exception {
 		final StoppableSourceStreamTask<Object, StoppableSource> sourceTask =
 				new StoppableSourceStreamTask<>(new DummyEnvironment("test", 1, 0));
 

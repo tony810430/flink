@@ -44,7 +44,13 @@ public class TestProcessingTimeServiceTest {
 		final TestProcessingTimeService tp = new TestProcessingTimeService();
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				(env) -> new OneInputStreamTask<>(env, tp),
+				(env) -> {
+					try {
+						return new OneInputStreamTask<>(env, tp);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.STRING_TYPE_INFO);
 

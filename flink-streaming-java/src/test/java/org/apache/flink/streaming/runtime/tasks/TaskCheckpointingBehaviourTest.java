@@ -449,7 +449,7 @@ public class TaskCheckpointingBehaviourTest extends TestLogger {
 	 */
 	public static final class TestStreamTask extends OneInputStreamTask<Object, Object> {
 
-		public TestStreamTask(Environment env) {
+		public TestStreamTask(Environment env) throws Exception {
 			super(env);
 		}
 

@@ -120,7 +120,13 @@ public class RocksDBAsyncSnapshotTest extends TestLogger {
 	public void testFullyAsyncSnapshot() throws Exception {
 
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
 
@@ -244,7 +250,13 @@ public class RocksDBAsyncSnapshotTest extends TestLogger {
 	@Test
 	public void testCancelFullyAsyncCheckpoints() throws Exception {
 		final OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
 		testHarness.setupOutputForSingletonOperatorChain();

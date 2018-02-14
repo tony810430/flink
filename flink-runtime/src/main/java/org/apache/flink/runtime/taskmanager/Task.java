@@ -1018,6 +1018,33 @@ public class Task implements Runnable, TaskActions, CheckpointListener {
 								taskNameWithSubtask,
 								executionId),
 							cause));
+
+					// we need to cancel the invokable because some task, StreamTask for example,
+					// might have called invokable.open()
+					if (invokable != null && invokableHasBeenCanceled.compareAndSet(false, true)) {
+						LOG.info("Triggering cancellation of task code {} ({}).", taskNameWithSubtask, executionId);
+
+						// because the canceling may block on user code, we cancel from a separate thread
+						// we do not reuse the async call handler, because that one may be blocked, in which
+						// case the canceling could not continue
+
+						// The canceller calls cancel and interrupts the executing thread once
+						Runnable canceler = new TaskCanceler(
+							LOG,
+							invokable,
+							executingThread,
+							taskNameWithSubtask,
+							producedPartitions,
+							inputGates);
+
+						Thread cancelThread = new Thread(
+							executingThread.getThreadGroup(),
+							canceler,
+							String.format("Canceler for %s (%s).", taskNameWithSubtask, executionId));
+						cancelThread.setDaemon(true);
+						cancelThread.setUncaughtExceptionHandler(FatalExitExceptionHandler.INSTANCE);
+						cancelThread.start();
+					}
 					return;
 				}
 			}

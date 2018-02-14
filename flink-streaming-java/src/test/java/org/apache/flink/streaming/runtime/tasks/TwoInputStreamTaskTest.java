@@ -69,7 +69,13 @@ public class TwoInputStreamTaskTest {
 	public void testOpenCloseAndTimestamps() throws Exception {
 		final TwoInputStreamTaskTestHarness<String, Integer, String> testHarness =
 				new TwoInputStreamTaskTestHarness<>(
-						TwoInputStreamTask::new,
+						env -> {
+							try {
+								return new TwoInputStreamTask<>(env);
+							} catch (Exception e) {
+								return null;
+							}
+						},
 						BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
 
@@ -114,7 +120,13 @@ public class TwoInputStreamTaskTest {
 
 		final TwoInputStreamTaskTestHarness<String, Integer, String> testHarness =
 			new TwoInputStreamTaskTestHarness<String, Integer, String>(
-				TwoInputStreamTask::new,
+				env -> {
+					try {
+						return new TwoInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				2, 2, new int[] {1, 2},
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.INT_TYPE_INFO,
@@ -226,7 +238,13 @@ public class TwoInputStreamTaskTest {
 	public void testCheckpointBarriers() throws Exception {
 		final TwoInputStreamTaskTestHarness<String, Integer, String> testHarness =
 				new TwoInputStreamTaskTestHarness<String, Integer, String>(
-						TwoInputStreamTask::new,
+						env -> {
+							try {
+								return new TwoInputStreamTask<>(env);
+							} catch (Exception e) {
+								return null;
+							}
+						},
 						2, 2, new int[] {1, 2},
 						BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
@@ -310,7 +328,13 @@ public class TwoInputStreamTaskTest {
 	public void testOvertakingCheckpointBarriers() throws Exception {
 		final TwoInputStreamTaskTestHarness<String, Integer, String> testHarness =
 				new TwoInputStreamTaskTestHarness<>(
-						TwoInputStreamTask::new,
+						env -> {
+							try {
+								return new TwoInputStreamTask<>(env);
+							} catch (Exception e) {
+								return null;
+							}
+						},
 						2, 2, new int[] {1, 2},
 						BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
@@ -384,7 +408,15 @@ public class TwoInputStreamTaskTest {
 
 	@Test
 	public void testWatermarkMetrics() throws Exception {
-		final TwoInputStreamTaskTestHarness<String, Integer, String> testHarness = new TwoInputStreamTaskTestHarness<>(TwoInputStreamTask::new, BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
+		final TwoInputStreamTaskTestHarness<String, Integer, String> testHarness = new TwoInputStreamTaskTestHarness<>(
+				env1 -> {
+					try {
+						return new TwoInputStreamTask<>(env1);
+					} catch (Exception e) {
+						return null;
+					}
+				},
+				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 
 		CoStreamMap<String, Integer, String> headOperator = new CoStreamMap<>(new IdentityMap());
 		final OperatorID headOperatorId = new OperatorID();

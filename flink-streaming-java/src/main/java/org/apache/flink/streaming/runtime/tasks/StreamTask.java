@@ -190,7 +190,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 *
 	 * @param env The task environment for this task.
 	 */
-	protected StreamTask(Environment env) {
+	protected StreamTask(Environment env) throws Exception {
 		this(env, null);
 	}
 
@@ -206,8 +206,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 	 */
 	protected StreamTask(
 			Environment environment,
-			@Nullable ProcessingTimeService timeProvider) {
-
+			@Nullable ProcessingTimeService timeProvider) throws Exception {
 		super(environment);
 
 		this.timerService = timeProvider;
@@ -215,35 +214,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		this.streamRecordWriters = createStreamRecordWriters(
 			configuration,
 			environment);
-	}
 
-	// ------------------------------------------------------------------------
-	//  Life cycle methods for specific implementations
-	// ------------------------------------------------------------------------
-
-	protected abstract void init() throws Exception;
-
-	protected abstract void run() throws Exception;
-
-	protected abstract void cleanup() throws Exception;
-
-	protected abstract void cancelTask() throws Exception;
-
-	// ------------------------------------------------------------------------
-	//  Core work methods of the Stream Task
-	// ------------------------------------------------------------------------
-
-	public StreamTaskStateInitializer createStreamTaskStateInitializer() {
-		return new StreamTaskStateInitializerImpl(
-			getEnvironment(),
-			stateBackend,
-			timerService);
-	}
-
-	@Override
-	public final void invoke() throws Exception {
-
-		boolean disposed = false;
 		try {
 			// -------- Initialize ---------
 			LOG.debug("Initializing {}.", getName());
@@ -301,7 +272,41 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			if (canceled) {
 				throw new CancelTaskException();
 			}
+		}
+		catch (Throwable t) {
+			cleanupAll(false);
+			throw t;
+		}
+	}
 
+	// ------------------------------------------------------------------------
+	//  Life cycle methods for specific implementations
+	// ------------------------------------------------------------------------
+
+	protected abstract void init() throws Exception;
+
+	protected abstract void run() throws Exception;
+
+	protected abstract void cleanup() throws Exception;
+
+	protected abstract void cancelTask() throws Exception;
+
+	// ------------------------------------------------------------------------
+	//  Core work methods of the Stream Task
+	// ------------------------------------------------------------------------
+
+	public StreamTaskStateInitializer createStreamTaskStateInitializer() {
+		return new StreamTaskStateInitializerImpl(
+			getEnvironment(),
+			stateBackend,
+			timerService);
+	}
+
+	@Override
+	public final void invoke() throws Exception {
+
+		boolean disposed = false;
+		try {
 			// let the task do its work
 			isRunning = true;
 			run();
@@ -345,62 +350,66 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			disposed = true;
 		}
 		finally {
-			// clean up everything we initialized
-			isRunning = false;
+			cleanupAll(disposed);
+		}
+	}
 
-			// clear the interrupted status so that we can wait for the following resource shutdowns to complete
-			Thread.interrupted();
+	private void cleanupAll(boolean disposed) throws Exception {
+		// clean up everything we initialized
+		isRunning = false;
 
-			// stop all timers and threads
-			if (timerService != null && !timerService.isTerminated()) {
-				try {
+		// clear the interrupted status so that we can wait for the following resource shutdowns to complete
+		Thread.interrupted();
 
-					final long timeoutMs = getEnvironment().getTaskManagerInfo().getConfiguration().
-						getLong(TaskManagerOptions.TASK_CANCELLATION_TIMEOUT_TIMERS);
-
-					// wait for a reasonable time for all pending timer threads to finish
-					boolean timerShutdownComplete =
-						timerService.shutdownAndAwaitPending(timeoutMs, TimeUnit.MILLISECONDS);
-
-					if (!timerShutdownComplete) {
-						LOG.warn("Timer service shutdown exceeded time limit of {} ms while waiting for pending " +
-							"timers. Will continue with shutdown procedure.", timeoutMs);
-					}
-				}
-				catch (Throwable t) {
-					// catch and log the exception to not replace the original exception
-					LOG.error("Could not shut down timer service", t);
-				}
-			}
-
-			// stop all asynchronous checkpoint threads
+		// stop all timers and threads
+		if (timerService != null && !timerService.isTerminated()) {
 			try {
-				cancelables.close();
-				shutdownAsyncThreads();
+
+				final long timeoutMs = getEnvironment().getTaskManagerInfo().getConfiguration().
+					getLong(TaskManagerOptions.TASK_CANCELLATION_TIMEOUT_TIMERS);
+
+				// wait for a reasonable time for all pending timer threads to finish
+				boolean timerShutdownComplete =
+					timerService.shutdownAndAwaitPending(timeoutMs, TimeUnit.MILLISECONDS);
+
+				if (!timerShutdownComplete) {
+					LOG.warn("Timer service shutdown exceeded time limit of {} ms while waiting for pending " +
+						"timers. Will continue with shutdown procedure.", timeoutMs);
+				}
 			}
 			catch (Throwable t) {
 				// catch and log the exception to not replace the original exception
-				LOG.error("Could not shut down async checkpoint threads", t);
+				LOG.error("Could not shut down timer service", t);
 			}
+		}
 
-			// we must! perform this cleanup
-			try {
-				cleanup();
-			}
-			catch (Throwable t) {
-				// catch and log the exception to not replace the original exception
-				LOG.error("Error during cleanup of stream task", t);
-			}
+		// stop all asynchronous checkpoint threads
+		try {
+			cancelables.close();
+			shutdownAsyncThreads();
+		}
+		catch (Throwable t) {
+			// catch and log the exception to not replace the original exception
+			LOG.error("Could not shut down async checkpoint threads", t);
+		}
 
-			// if the operators were not disposed before, do a hard dispose
-			if (!disposed) {
-				disposeAllOperators();
-			}
+		// we must! perform this cleanup
+		try {
+			cleanup();
+		}
+		catch (Throwable t) {
+			// catch and log the exception to not replace the original exception
+			LOG.error("Error during cleanup of stream task", t);
+		}
 
-			// release the output resources. this method should never fail.
-			if (operatorChain != null) {
-				operatorChain.releaseOutputs();
-			}
+		// if the operators were not disposed before, do a hard dispose
+		if (!disposed) {
+			disposeAllOperators();
+		}
+
+		// release the output resources. this method should never fail.
+		if (operatorChain != null) {
+			operatorChain.releaseOutputs();
 		}
 	}
 

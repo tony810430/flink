@@ -56,7 +56,14 @@ public class StreamTaskCancellationBarrierTest {
 	@Test
 	public void testEmitCancellationBarrierWhenNotReady() throws Exception {
 		StreamTaskTestHarness<String> testHarness = new StreamTaskTestHarness<>(
-				InitBlockingTask::new, BasicTypeInfo.STRING_TYPE_INFO);
+				env -> {
+					try {
+						return new InitBlockingTask(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
+				BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
 
 		// start the test - this cannot succeed across the 'init()' method
@@ -86,7 +93,13 @@ public class StreamTaskCancellationBarrierTest {
 	public void testDeclineCallOnCancelBarrierOneInput() throws Exception {
 
 		OneInputStreamTaskTestHarness<String, String> testHarness = new OneInputStreamTaskTestHarness<>(
-				OneInputStreamTask::new,
+				env -> {
+					try {
+						return new OneInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				1, 2,
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
@@ -131,7 +144,13 @@ public class StreamTaskCancellationBarrierTest {
 	public void testDeclineCallOnCancelBarrierTwoInputs() throws Exception {
 
 		TwoInputStreamTaskTestHarness<String, String, String> testHarness = new TwoInputStreamTaskTestHarness<>(
-				TwoInputStreamTask::new,
+				env -> {
+					try {
+						return new TwoInputStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
 				BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO);
 		testHarness.setupOutputForSingletonOperatorChain();
 
@@ -174,7 +193,7 @@ public class StreamTaskCancellationBarrierTest {
 		private final Object lock = new Object();
 		private volatile boolean running = true;
 
-		protected InitBlockingTask(Environment env) {
+		protected InitBlockingTask(Environment env) throws Exception {
 			super(env);
 		}
 

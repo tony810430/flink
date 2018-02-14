@@ -205,7 +205,7 @@ public class StreamTaskTerminationTest extends TestLogger {
 	 */
 	public static class BlockingStreamTask<T, OP extends StreamOperator<T>> extends StreamTask<T, OP> {
 
-		public BlockingStreamTask(Environment env) {
+		public BlockingStreamTask(Environment env) throws Exception {
 			super(env);
 		}
 

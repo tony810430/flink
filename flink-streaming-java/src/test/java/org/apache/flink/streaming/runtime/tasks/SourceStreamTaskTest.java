@@ -59,7 +59,14 @@ public class SourceStreamTaskTest {
 	@SuppressWarnings("unchecked")
 	public void testOpenClose() throws Exception {
 		final StreamTaskTestHarness<String> testHarness = new StreamTaskTestHarness<>(
-				SourceStreamTask::new, BasicTypeInfo.STRING_TYPE_INFO);
+				env -> {
+					try {
+						return new SourceStreamTask<>(env);
+					} catch (Exception e) {
+						return null;
+					}
+				},
+				BasicTypeInfo.STRING_TYPE_INFO);
 
 		testHarness.setupOutputForSingletonOperatorChain();
 
@@ -104,7 +111,14 @@ public class SourceStreamTaskTest {
 			final TupleTypeInfo<Tuple2<Long, Integer>> typeInfo = new TupleTypeInfo<>(BasicTypeInfo.LONG_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO);
 
 			final StreamTaskTestHarness<Tuple2<Long, Integer>> testHarness = new StreamTaskTestHarness<>(
-					SourceStreamTask::new, typeInfo);
+					env -> {
+						try {
+							return new SourceStreamTask<>(env);
+						} catch (Exception e) {
+							return null;
+						}
+					},
+					typeInfo);
 			testHarness.setupOutputForSingletonOperatorChain();
 
 			StreamConfig streamConfig = testHarness.getStreamConfig();

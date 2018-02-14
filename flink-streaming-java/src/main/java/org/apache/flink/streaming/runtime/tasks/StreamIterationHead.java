@@ -43,7 +43,7 @@ public class StreamIterationHead<OUT> extends OneInputStreamTask<OUT, OUT> {
 
 	private volatile boolean running = true;
 
-	public StreamIterationHead(Environment env) {
+	public StreamIterationHead(Environment env) throws Exception {
 		super(env);
 	}
 

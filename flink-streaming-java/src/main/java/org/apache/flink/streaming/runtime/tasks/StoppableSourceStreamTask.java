@@ -35,7 +35,7 @@ public class StoppableSourceStreamTask<OUT, SRC extends SourceFunction<OUT> & St
 
 	private volatile boolean stopped;
 
-	public StoppableSourceStreamTask(Environment environment) {
+	public StoppableSourceStreamTask(Environment environment) throws Exception {
 		super(environment);
 	}
 

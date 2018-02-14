@@ -47,7 +47,7 @@ public class SourceStreamTask<OUT, SRC extends SourceFunction<OUT>, OP extends S
 
 	private volatile boolean externallyInducedCheckpoints;
 
-	public SourceStreamTask(Environment env) {
+	public SourceStreamTask(Environment env) throws Exception {
 		super(env);
 	}
 
