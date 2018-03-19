@@ -244,26 +244,6 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 			operatorChain = new OperatorChain<>(this, streamRecordWriters);
 			headOperator = operatorChain.getHeadOperator();
-
-			// -------- Invoke --------
-			LOG.debug("Invoking {}", getName());
-
-			// we need to make sure that any triggers scheduled in open() cannot be
-			// executed before all operators are opened
-			synchronized (lock) {
-
-				// both the following operations are protected by the lock
-				// so that we avoid race conditions in the case that initializeState()
-				// registers a timer, that fires before the open() is called.
-
-				initializeState();
-				openAllOperators();
-			}
-
-			// final check to exit early before starting to run
-			if (canceled) {
-				throw new CancelTaskException();
-			}
 		}
 		catch (Throwable t) {
 			cleanupAll(false);
@@ -303,6 +283,26 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			init();
 
 			// save the work of reloading state, etc, if the task is already canceled
+			if (canceled) {
+				throw new CancelTaskException();
+			}
+
+			// -------- Invoke --------
+			LOG.debug("Invoking {}", getName());
+
+			// we need to make sure that any triggers scheduled in open() cannot be
+			// executed before all operators are opened
+			synchronized (lock) {
+
+				// both the following operations are protected by the lock
+				// so that we avoid race conditions in the case that initializeState()
+				// registers a timer, that fires before the open() is called.
+
+				initializeState();
+				openAllOperators();
+			}
+
+			// final check to exit early before starting to run
 			if (canceled) {
 				throw new CancelTaskException();
 			}
