@@ -245,14 +245,6 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 			operatorChain = new OperatorChain<>(this, streamRecordWriters);
 			headOperator = operatorChain.getHeadOperator();
 
-			// task specific initialization
-			init();
-
-			// save the work of reloading state, etc, if the task is already canceled
-			if (canceled) {
-				throw new CancelTaskException();
-			}
-
 			// -------- Invoke --------
 			LOG.debug("Invoking {}", getName());
 
@@ -307,6 +299,14 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 		boolean disposed = false;
 		try {
+			// task specific initialization
+			init();
+
+			// save the work of reloading state, etc, if the task is already canceled
+			if (canceled) {
+				throw new CancelTaskException();
+			}
+
 			// let the task do its work
 			isRunning = true;
 			run();
