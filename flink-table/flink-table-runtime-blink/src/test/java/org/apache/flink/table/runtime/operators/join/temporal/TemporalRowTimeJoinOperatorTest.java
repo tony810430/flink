@@ -185,6 +185,14 @@ public class TemporalRowTimeJoinOperatorTest extends TemporalTimeJoinOperatorTes
                                         TemporalRowTimeJoinOperator.getRegisteredTimerStateName(),
                                         Types.LONG))
                         .value());
+        Assert.assertNull(
+                joinOperator
+                        .getKeyedStateStore()
+                        .getState(
+                                new ValueStateDescriptor<>(
+                                        TemporalRowTimeJoinOperator.getNextRowTimeHeapIndexStateName(),
+                                        Types.LONG))
+                        .value());
 
         testHarness.close();
     }
